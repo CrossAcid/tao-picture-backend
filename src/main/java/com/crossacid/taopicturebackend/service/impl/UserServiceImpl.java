@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.crossacid.taopicturebackend.exception.BusinessException;
 import com.crossacid.taopicturebackend.exception.ErrorCode;
+import com.crossacid.taopicturebackend.manager.auth.StpKit;
 import com.crossacid.taopicturebackend.model.dto.user.UserQueryRequest;
 import com.crossacid.taopicturebackend.model.entity.User;
 import com.crossacid.taopicturebackend.model.enums.UserRoleEnum;
@@ -101,6 +102,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         // 3. 记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, user);
+        StpKit.SPACE.login(user.getId());
+        StpKit.SPACE.getSession().set(USER_LOGIN_STATE, user);
         return this.getLoginUserVO(user);
     }
 

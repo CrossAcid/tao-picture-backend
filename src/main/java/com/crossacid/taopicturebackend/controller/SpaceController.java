@@ -1,7 +1,5 @@
 package com.crossacid.taopicturebackend.controller;
 
-import cn.hutool.core.util.RandomUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.crossacid.taopicturebackend.annotation.AuthCheck;
 import com.crossacid.taopicturebackend.common.BaseResponse;
@@ -11,6 +9,7 @@ import com.crossacid.taopicturebackend.constant.UserConstant;
 import com.crossacid.taopicturebackend.exception.BusinessException;
 import com.crossacid.taopicturebackend.exception.ErrorCode;
 import com.crossacid.taopicturebackend.exception.ThrowUtils;
+import com.crossacid.taopicturebackend.manager.auth.SpaceUserAuthManager;
 import com.crossacid.taopicturebackend.model.dto.space.*;
 import com.crossacid.taopicturebackend.model.entity.Space;
 import com.crossacid.taopicturebackend.model.entity.User;
@@ -18,22 +17,15 @@ import com.crossacid.taopicturebackend.model.enums.SpaceLevelEnum;
 import com.crossacid.taopicturebackend.model.vo.SpaceVO;
 import com.crossacid.taopicturebackend.service.SpaceService;
 import com.crossacid.taopicturebackend.service.UserService;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -46,6 +38,9 @@ public class SpaceController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private SpaceUserAuthManager spaceUserAuthManager;
 
     /**
      * 删除空间
@@ -120,8 +115,12 @@ public class SpaceController {
         // 查询数据库
         Space space = spaceService.getById(id);
         ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR);
+        SpaceVO spaceVO = spaceService.getSpaceVO(space, request);
+        User loginUser = userService.getLoginUser(request);
+        List<String> permissionList = spaceUserAuthManager.getPermissionList(space, loginUser);
+        spaceVO.setPermissionList(permissionList);
         // 获取封装类
-        return ResultUtils.success(spaceService.getSpaceVO(space, request));
+        return ResultUtils.success(spaceVO);
     }
 
     /**
